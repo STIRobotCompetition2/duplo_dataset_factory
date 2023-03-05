@@ -34,6 +34,9 @@ def transform(base_mesh: list, new_mesh: list, connection:list, layer:int):
 def generate_construction(max_height:int, max_width:int, width_prob:float, height_prob:float)->trimesh.Trimesh:
     objects = []
     layers = [[copy.deepcopy(BRICK_TYPES[0])]]
+    uv = np.random.rand(layers[0][0][0].vertices.shape[0], 2)
+    next_color = COLOR_PALETTE[np.random.randint(0,len(COLOR_PALETTE))]
+    layers[0][0][0].visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1, ambient=next_color, specular=next_color))
     while len(layers) < max_height + 1:
         new_layer = []
         for brick in layers[-1]:
@@ -42,9 +45,11 @@ def generate_construction(max_height:int, max_width:int, width_prob:float, heigh
     
                 next_color = COLOR_PALETTE[np.random.randint(0,len(COLOR_PALETTE))]
                 # next_brick = copy.deepcopy(BRICK_TYPES[0])
-                next_brick[0].visual.face_colors = next_color
-                next_connection  = [np.random.randint(0, brick[1][0]), np.random.randint(0, brick[1][1]), np.random.randint(0,4)]
+                uv = np.random.rand(next_brick[0].vertices.shape[0], 2)
+                next_brick[0].visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1, ambient=None, specular=next_color))
+                next_connection = [np.random.randint(0, brick[1][0]), np.random.randint(0, brick[1][1]), np.random.randint(0,4)]
                 transform(brick, next_brick, next_connection, len(layers))
+                # next_brick[0] = trimesh.Trimesh(next_brick[0].vertices, next_brick[0].faces, visual=trimesh.visual.TextureVisuals(face_materials=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1.0, ambient=next_color)))
                 new_layer.append(copy.deepcopy(next_brick))
         layers.append(new_layer)
     return layers
