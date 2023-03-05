@@ -10,7 +10,7 @@ from trimesh.transformations import transform_points
 from scipy.spatial.transform import Rotation as R
 import pyrender
 
-def generate_sample(id:int, dir:str="generated", max_height:int=5):
+def generate_sample(id:int, dir:str="generated", max_height:int=5, noise_intensity:float=0.0):
     # Generate Scene
     scene = trimesh.Scene()
     
@@ -74,6 +74,12 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5):
     upper_border = np.max(potential_border_points, axis=1)
     lower_border = np.min(potential_border_points, axis=1)
 
+    if noise_intensity > 0.0:
+        row,col,ch= rendered_pyrender.shape
+        gauss = np.random.normal(0.0,noise_intensity**0.5,(row,col,ch))
+        gauss = gauss.reshape(row,col,ch)
+        rendered_pyrender = rendered_pyrender + gauss
+
     # Write results to disk
     cv.imwrite("{}/images/im{}.jpg".format(dir, id), rendered_pyrender)
     cv.rectangle(rendered_pyrender, lower_border.astype(int).tolist(), upper_border.astype(int).tolist(), color=[255,0,255], thickness=5)
@@ -94,8 +100,12 @@ if __name__=="__main__":
         max_height = int(sys.argv[2])
     except:
         max_height = 0
-    print("Generate sample with id {} and max_height {}".format(id, max_height))
-    generate_sample(id=id, max_height=max_height)     
+    try:
+        noise_intensity = int(sys.argv[3])
+    except:
+        noise_intensity = 0
+    print("Generate sample with id {} and max_height {} and noise_intensity {}".format(id, max_height, noise_intensity))
+    generate_sample(id=id, max_height=max_height, noise_intensity=noise_intensity)     
     
 
 
