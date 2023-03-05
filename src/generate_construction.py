@@ -11,7 +11,7 @@ COLOR_PALETTE = [
 
 BRICK_TYPES = [
     [trimesh.primitives.Box([3,3,3], np.array([[1,0,0,0.75],[0,1,0,0.75],[0,0,1,1.5],[0,0,0,1]])), [2,2], [0,0,0]],
-    # [trimesh.primitives.Box([6,3,3], np.array([[1,0,0,3],[0,1,0,1.5],[0,0,1,1.5],[0,0,0,1]])), [4,2], [0,0,0]],
+    [trimesh.primitives.Box([6,3,3], np.array([[1,0,0,2.25],[0,1,0,0.75],[0,0,1,1.5],[0,0,0,1]])), [4,2], [0,0,0]],
 ]
 def rotation_matrix_2d(theta:float): return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
@@ -38,12 +38,12 @@ def generate_construction(max_height:int, max_width:int, width_prob:float, heigh
         new_layer = []
         for brick in layers[-1]:
             while np.random.rand() > np.exp(0.2 * len(new_layer)) - 1:
-                # next_brick = copy.deepcopy(BRICK_TYPES[np.random.randint(0,len(BRICK_TYPES) - 1)])
+                next_brick = copy.deepcopy(BRICK_TYPES[np.random.randint(0,len(BRICK_TYPES))])
     
                 next_color = COLOR_PALETTE[np.random.randint(0,len(COLOR_PALETTE))]
-                next_brick = copy.deepcopy(BRICK_TYPES[0])
+                # next_brick = copy.deepcopy(BRICK_TYPES[0])
                 next_brick[0].visual.face_colors = next_color
-                next_connection  = [np.random.randint(0, next_brick[1][0]), np.random.randint(0, next_brick[1][1]), np.random.randint(0,4)]
+                next_connection  = [np.random.randint(0, brick[1][0]), np.random.randint(0, brick[1][1]), np.random.randint(0,4)]
                 transform(brick, next_brick, next_connection, len(layers))
                 new_layer.append(copy.deepcopy(next_brick))
         layers.append(new_layer)
