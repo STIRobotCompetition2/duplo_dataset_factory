@@ -65,7 +65,7 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, noise_intensi
     pyrender_scene = pyrender.Scene.from_trimesh_scene(scene)
     cam = pyrender.IntrinsicsCamera(772.5483399, 772.5483399, 320, 320, scene.camera.z_near, scene.camera.z_far)
     cam_node = pyrender_scene.add(cam, pose=scene.camera_transform)
-    dl = pyrender.DirectionalLight(color=np.clip(np.random.normal(0.9,0.05,3),0,1.0), intensity=np.random.normal(7.0, 5.0),)
+    dl = pyrender.DirectionalLight(color=np.clip(np.random.normal(0.9,0.05,3),0.8,1.0), intensity=np.clip(np.random.normal(15.0, 8.0),0.2,np.inf))
     pyrender_scene.add(dl)
     renderer = pyrender.offscreen.OffscreenRenderer(640, 640)
     # Rendering Time!
