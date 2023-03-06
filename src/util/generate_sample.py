@@ -24,8 +24,6 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, max_construct
             empty_image = empty_image + gauss.astype(np.uint8)
         cv.imwrite("{}/images/im{}.jpg".format(dir, id), empty_image)
         open("{}/labels/im{}.txt".format(dir, id), "w+").close()
-
-    # Generate Construction
     
     
     if timing: start_time=time.time()
@@ -34,7 +32,9 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, max_construct
     bounding_boxes = []
     z_shift =  30 * np.random.rand() - 60
     c = master_scene.camera_transform
-    for _ in range(np.random.randint(1,max_constructions)):
+    n_constructions_target = np.random.randint(1,max_constructions+1)
+    n_constructions_is = 0
+    while n_constructions_is < n_constructions_target:
         temp_scene = trimesh.Scene()
         if timing: start_time=time.time()
         construction = generate_construction(np.random.randint(1,max_height+1),0,0,0)
@@ -50,7 +50,6 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, max_construct
         for layer in construction:
             for brick in layer:
                 temp_scene.add_geometry(brick[0], transform=construction_pose)
-                master_scene.add_geometry(brick[0], transform=construction_pose)
         potential_border_points = np.array(temp_scene.convex_hull.vertices).transpose()
         potential_border_points = np.concatenate((potential_border_points, np.ones((1,potential_border_points.shape[1]))), axis=0)
         K = np.array([
@@ -68,7 +67,15 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, max_construct
         # Find extrema = Corners of BB-rectangle
         upper_border = np.max(potential_border_points, axis=1)
         lower_border = np.min(potential_border_points, axis=1)
-        bounding_boxes.append([lower_border, upper_border])
+        for bounding_box in bounding_boxes:
+            if not(np.any(upper_border < bounding_box[0]) or np.any(bounding_box[1] < lower_border)):
+                break
+        else:
+            bounding_boxes.append([lower_border, upper_border])
+            for layer in construction:
+                for brick in layer:
+                    master_scene.add_geometry(brick[0], transform=construction_pose)
+            n_constructions_is += 1
     if timing: print("[Construction2Scene]\t{} s".format(time.time()-start_time))
     # Generate Random Spatial Transformation for DUPLO construction
     master_scene.camera_transform = c
@@ -141,7 +148,7 @@ if __name__=="__main__":
     except:
         noise_intensity = 0
     print("Generate sample with id {} and max_height {} and noise_intensity {}".format(id, max_height, noise_intensity))
-    generate_sample(id=id, max_height=max_height, noise_intensity=noise_intensity, max_constructions=5)     
+    generate_sample(id=id, max_height=max_height, noise_intensity=noise_intensity, max_constructions=8)     
     
 
 
