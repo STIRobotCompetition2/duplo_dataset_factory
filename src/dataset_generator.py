@@ -23,7 +23,8 @@ if __name__=="__main__":
         "max_height": 5.0,
         "dir": "generated",
         "noise_intensity": 50.0,
-        "empty_prob": 0.05,
+        "empty_prob": 0.005,
+        "texture_dir": "data/textures"
     }
     chunk_size = N_SAMPLES_TARGET // N_THREADS
     if(chunk_size * N_THREADS != N_SAMPLES_TARGET):

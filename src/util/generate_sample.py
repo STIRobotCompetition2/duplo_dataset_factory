@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation as R
 import time
 import pyrender
 
-def generate_sample(id:int, dir:str="generated", max_height:int=5, max_constructions:int=3, noise_intensity:float=0.0, timing:bool=False, empty_prob:float=0.001): 
+def generate_sample(id:int, dir:str="generated", max_height:int=5, max_constructions:int=3, noise_intensity:float=0.0, timing:bool=False, empty_prob:float=0.001, texture_dir:str=None): 
     assert max_height > 0 and max_constructions > 0
     if np.random.rand() < empty_prob:
         print(noise_intensity)
@@ -87,9 +87,17 @@ def generate_sample(id:int, dir:str="generated", max_height:int=5, max_construct
     bottom_plane_tf[:3,3] = np.array([0,0,lowest_z])
     bottom_plane = trimesh.primitives.Box((100,100, 0.01,), bottom_plane_tf)
     uv = np.random.rand(bottom_plane.vertices.shape[0], 2)
-    # Ground plane has random greyish shape for now
-    bottom_plane.visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=np.abs(np.random.normal(0.2,0.05,3)), glossiness=0, specular=np.abs(np.random.normal(0.2,0.05,3))))
+
+    if texture_dir is None or np.random.rand() > 0.2:
+        bottom_plane.visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=np.abs(np.random.normal(0.2,0.05,3)), glossiness=0, specular=np.abs(np.random.normal(0.2,0.05,3))))
+    else:
+        available_textures = [f for f in os.listdir(texture_dir) if os.path.isfile(os.path.join(texture_dir, f)) ]
+        texture_path = os.path.join(texture_dir, available_textures[np.random.randint(0,len(available_textures))])
+        texture_img = Image.open(texture_path)
+        texture_img = texture_img.resize((320,320))
+        bottom_plane.visual = trimesh.visual.TextureVisuals(uv=uv,image=texture_img,material=trimesh.visual.material.SimpleMaterial(image=texture_img))
     master_scene.add_geometry(bottom_plane)
+
     
     # Construct Pyrender-Scene from trimesh
     # TODO: Explain magic numbers (or compute them)
