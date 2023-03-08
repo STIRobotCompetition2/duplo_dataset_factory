@@ -18,7 +18,7 @@ def _add_noise(image:np.ndarray, noise_intensity:float=0.1):
     image = image + gauss
     return image.astype(np.uint8)
 
-def generate_empty_from_images(start_id:int, source_dir:str, target_dir:str="generated", rotate:bool=True, noise_intensity:float=100, modify_colors:bool=True, target_resolution:tuple=(640,640,), visualize_each_sample:bool=False):
+def generate_empty_from_images(start_id:int, source_dir:str, target_dir:str="generated", rotate:bool=True, noise_intensity:float=20, modify_colors:bool=True, target_resolution:tuple=(640,640,), visualize_each_sample:bool=False):
     onlyfiles = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f)) ]
     orientations = np.arange(4) if rotate else [3]
     color_transformations = np.arange(3) if modify_colors else [0]
