@@ -5,20 +5,10 @@ import copy
 import logging 
 import csv
 from textwrap import wrap
-
+import matplotlib.pyplot as plt
 DUPLO_WIDTH = 3.18 / 2
 DUPLO_HEIGHT = 1.92
 
-COLOR_PALETTE = [
-    [255, 0, 0, 255],
-    [0, 255, 0, 255],
-    [0, 0, 255, 255]
-]
-
-BRICK_TYPES = [
-    [trimesh.primitives.Box([3,3,3], np.array([[1,0,0,0.75],[0,1,0,0.75],[0,0,1,1.5],[0,0,0,1]])), [2,2], [0,0,0]],
-    [trimesh.primitives.Box([6,3,3], np.array([[1,0,0,2.25],[0,1,0,0.75],[0,0,1,1.5],[0,0,0,1]])), [4,2], [0,0,0]],
-]
 
 def prepare_database(brick_dir:str="data/bricks", color_file:str="data/colors/colors.csv"):
     brick_files = [f for f in os.listdir(brick_dir) if os.path.isfile(os.path.join(brick_dir, f)) ]
@@ -43,7 +33,9 @@ def prepare_database(brick_dir:str="data/bricks", color_file:str="data/colors/co
     with open(color_file, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in reader:
-            try: color_palette.append([int(hex_as_str, 16) for hex_as_str in wrap(row[2],2)])
+            try: 
+                color_palette.append([int(hex_as_str, 16) for hex_as_str in wrap(row[2],2)])
+                color_palette[-1].append(255 if row[3] == 'f' else 180)
             except: pass
     logging.warn("Color loading not yet supported")
     return brick_geometries, color_palette
@@ -75,26 +67,44 @@ def generate_construction(brick_shapes:list, color_palette:list, max_height:int)
     layers[0][0][0].visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1, ambient=next_color, specular=next_color))
     while len(layers) < max_height + 1:
         new_layer = []
+        # collision_check_grid = np.zeros((100,100))
+
         for brick in layers[-1]:
+            # anchor = (np.array(brick[2][0:2]) / DUPLO_WIDTH).astype(np.int64) + np.ones((2,), dtype=np.int64) * 50
             while np.random.rand() > np.exp(0.2 * len(new_layer)) - 1:
-                next_brick = copy.deepcopy(brick_shapes[np.random.randint(0,len(BRICK_TYPES))])
-    
+                next_brick = copy.deepcopy(brick_shapes[np.random.randint(0,len(brick_shapes))])
                 next_color = color_palette[np.random.randint(0,len(color_palette))]
                 # next_brick = copy.deepcopy(BRICK_TYPES[0])
                 uv = np.random.rand(next_brick[0].vertices.shape[0], 2)
                 next_brick[0].visual = trimesh.visual.TextureVisuals(uv=uv,material=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1, ambient=None, specular=next_color))
                 next_connection = [np.random.randint(0, brick[1][0]), np.random.randint(0, brick[1][1]), np.random.randint(0,4)]
+                # for _ in range(10):
+                #     corner_A = anchor + np.array(next_connection[0:2])
+                #     corner_B = np.array(next_brick[1])
+                #     for _ in range(next_connection[2]):
+                #         corner_B = np.array([[0,-1],[1,0]], dtype=np.int64) @ corner_B
+                #     corner_B += anchor + np.array(next_connection[0:2])
+                #     min_corner = np.min([corner_B, corner_A],0)
+                #     max_corner = np.max([corner_B, corner_A],0)
+                #     if np.all(collision_check_grid[min_corner[0]:max_corner[0]+1, min_corner[1]:max_corner[1]+1] == 0): break
+                    
+                #     # plt.imshow(collision_check_grid)
+                #     # plt.show()
+                # else:
+                #     continue
+
+                # collision_check_grid[min_corner[0]:max_corner[0]+1, min_corner[1]:max_corner[1]+1] = 1
                 transform(brick, next_brick, next_connection, len(layers))
                 # next_brick[0] = trimesh.Trimesh(next_brick[0].vertices, next_brick[0].faces, visual=trimesh.visual.TextureVisuals(face_materials=trimesh.visual.material.SimpleMaterial(diffuse=next_color, glossiness=1.0, ambient=next_color)))
                 new_layer.append(copy.deepcopy(next_brick))
         layers.append(new_layer)
+        
     return layers
 
 if __name__ == "__main__":
     data_set,color_palette = prepare_database()
     construction = generate_construction(data_set, color_palette, 5)
     scene = trimesh.Scene()
-    scene.add_geometry(data_set[-1][0])
 
 
     for layer in construction:
